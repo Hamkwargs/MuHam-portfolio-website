@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Mid-Century Detective Office</title>
+<link rel="preload" as="image" href="/loading.gif">
+<style id="boot-css">
+#boot{position:fixed;inset:0;z-index:9999;background:#000;display:flex;align-items:center;justify-content:center;transition:opacity .6s ease}
+#boot.done{opacity:0;pointer-events:none}
+#boot img{width:min(20vw,calc(20vh*16/9));height:auto;max-height:100vh;image-rendering:pixelated;user-select:none;-webkit-user-drag:none}
+</style>
+</head>
+<body class="intro">
+  <div id="boot"><img src="/loading.gif" alt="Loading" draggable="false"></div>
+  <div id="notebook" data-keep role="dialog" aria-modal="true" aria-label="Case notes: how to explore the detective room" hidden></div>
+  <canvas id="scene-canvas"></canvas>
+  <canvas id="ray-canvas"></canvas>
+  <canvas id="dust-canvas"></canvas>
+  <canvas id="px-ui"></canvas>
+  <div id="vig"></div>
+  <div id="grain"></div>
+  <div class="lbar" id="top"></div>
+  <div class="lbar" id="bot"></div>
+  <div id="intro-fade"></div>
+  <button id="intro-skip">Skip ▸</button>
+  <button id="menu-btn" aria-label="Menu" aria-expanded="false" aria-controls="menu-panel">
+    <span></span><span></span><span></span>
+  </button>
+  <nav id="menu-panel" aria-label="Explore the room">
+    <div id="menu-title">Explore the room</div>
+    <ul id="menu-list"></ul>
+    <div id="weather-tag">Checking the time...</div>
+  </nav>
+  <div id="hint">Move the mouse to look around · scroll to start the tour · click the window to change the mood · click empty space to toggle the lamp</div>
+
+  <button id="vision-btn" title="Toggle detective vision">
+    <svg viewBox="0 0 24 24">
+      <path
+        d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zm0 12.5c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z" />
+    </svg>
+    <span id="vision-text">Detective vision: OFF</span>
+  </button>
+
+  <div id="tooltip">
+    <div id="tooltip-title">Object</div>
+    <div id="tooltip-desc">Description</div>
+  </div>
+
+  <div id="coffee-bubble" aria-live="polite"><div class="cb-name"><i class="cb-ico"></i>COFFEE CUP</div><div class="cb-body"><span id="coffee-quote"></span><span class="coffee-cursor">▮</span></div><span class="cb-tail"></span></div>
+  <div id="coffee-toast"></div>
+  <div id="badge-container"></div>
+
+
+  <script type="module" src="/src/main.ts"></script>
+</body>
+</html>

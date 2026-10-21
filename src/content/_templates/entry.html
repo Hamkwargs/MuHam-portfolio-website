@@ -1,0 +1,35 @@
+<!doctype html>
+<meta charset="utf-8">
+<!--
+  TEMPLATE: copy this file into a content folder (education / experience / awards / projects / docs)
+  and rename it, e.g. src/content/education/05-masters.html. This folder (_templates) is NOT loaded by the site.
+  Everything below the <meta> lines is plain HTML. Lay it out however you like.
+-->
+<meta name="order" content="5">                 <!-- sort order (1 = first) -->
+<meta name="title" content="Year 5">            <!-- shown as the big title -->
+<meta name="school" content="Example University"> <!-- education: school · experience: use "company" -->
+<meta name="period" content="2026 – 2027">
+<meta name="caption" content="Master's">        <!-- text written under the polaroid -->
+<meta name="photo" content="year5.jpg">         <!-- file in src/assets/images/ (optional) -->
+
+<h3>Year 5 · Research</h3>
+<p><strong>Example University</strong> — M.Sc.</p>
+
+<div class="cols-2">
+  <div>
+    <h4>What I did</h4>
+    <ul><li>Thesis on X</li><li>Teaching assistant</li></ul>
+  </div>
+  <div>
+    <h4>Stack</h4>
+    <div class="tags"><span>Python</span><span>PyTorch</span></div>
+  </div>
+</div>
+
+<!-- Images: just the file name from src/assets/images/. Shown as pixel art until clicked. -->
+<div class="gallery">
+  <img src="year5.jpg" alt="Lab day">
+  <img src="year5-poster.jpg" alt="Poster">
+</div>
+
+<p class="callout">Helper classes: cols, cols-2, cols-3, gallery, callout, tags, center, right, muted. Inline style="" works too.</p>
