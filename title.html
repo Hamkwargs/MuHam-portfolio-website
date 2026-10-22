@@ -1,0 +1,246 @@
+
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Folio Type Studio</title>
+    <style>
+        * { box-sizing: border-box; }
+        body {
+          margin: 0;
+          background: #161c1b;
+          color: #e9dfca;
+          font: 13px system-ui, sans-serif;
+        }
+        header {
+          height: 60px;
+          padding: 0 22px;
+          border-bottom: 1px solid #35413b;
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+        }
+        header h2 { font-family: Georgia, serif; letter-spacing: 2px; }
+        .layout {
+          display: grid;
+          grid-template-columns: 270px minmax(0, 1fr) 300px;
+          height: calc(100vh - 60px);
+        }
+        aside {
+          padding: 18px;
+          overflow-y: auto;
+          background: #202927;
+          border-right: 1px solid #35413b;
+        }
+        aside:last-child {
+          border-left: 1px solid #35413b;
+          border-right: 0;
+        }
+        main {
+          position: relative;
+          min-width: 0;
+          background: #101615;
+        }
+        #viewport { width: 100%; height: 100%; }
+        h3 {
+          font-size: 11px;
+          text-transform: uppercase;
+          letter-spacing: 2px;
+          color: #d6b685;
+          margin: 8px 0 14px;
+        }
+        label { display: block; color: #b1c0b5; margin: 12px 0 5px; }
+        input, select, button {
+          font: inherit;
+          color: #f4e9d1;
+          background: #303c36;
+          border: 1px solid #58675c;
+          padding: 9px;
+          border-radius: 5px;
+        }
+        input:not([type=color]):not([type=range]),
+        select { width: 100%; }
+        input[type=range] { width: 100%; padding: 0; }
+        input[type=color] { width: 100%; height: 38px; padding: 3px; }
+        button { cursor: pointer; }
+        button:hover { background: #526350; }
+        button:disabled { opacity: .4; cursor: not-allowed; }
+        button.primary { background: #826340; border-color: #bb9b6b; }
+        .full { width: 100%; margin-top: 10px; }
+        .layer, .font-item {
+          width: 100%;
+          text-align: left;
+          margin-bottom: 6px;
+        }
+        .layer.active { border-color: #dfbf85; background: #514936; }
+        #fontList { max-height: 270px; overflow: auto; }
+        .font-item { display: block; overflow: hidden; }
+        .font-item small { opacity: .6; display: block; }
+        .fields { display: grid; grid-template-columns: repeat(3, 1fr); gap: 7px; }
+        .fields input { min-width: 0; }
+        .hint { color: #91a096; font-size: 11px; line-height: 1.7; }
+        .toolbar {
+          position: absolute;
+          top: 14px;
+          left: 14px;
+          background: #202927df;
+          padding: 10px 14px;
+          border: 1px solid #415047;
+          border-radius: 6px;
+        }
+        .status { color: #c9b68c; }
+        hr { border: 0; border-top: 1px solid #3b4940; margin: 22px 0; }
+        @media(max-width: 850px) {
+          .layout { grid-template-columns: 1fr; height: auto; }
+          aside { max-height: 450px; }
+          main { height: 460px; order: -1; }
+        }
+    </style>
+</head>
+<body>
+<header>
+    <h2>FOLIO · TYPE STUDIO</h2>
+    <button class="primary" id="export">EXPORT TITLE3D.TS</button>
+</header>
+
+<div class="layout">
+    <aside>
+        <h3>Layers</h3>
+        <div id="layers"></div>
+        <button id="add" class="full">+ Add Text Layer</button>
+        <button id="remove" class="full">Remove Selected</button>
+
+        <hr />
+        <h3>Font Library</h3>
+
+        <input
+                id="search"
+                placeholder="Search Fontsource fonts..."
+        />
+
+        <label>Category</label>
+        <select id="fontCategory">
+            <option value="all">All Fonts</option>
+            <option value="serif">Serif</option>
+            <option value="sans-serif">Sans Serif</option>
+            <option value="display">Display</option>
+            <option value="handwriting">Handwriting</option>
+            <option value="monospace">Monospace</option>
+        </select>
+
+        <label>Sort By</label>
+        <select id="fontSort">
+            <option value="name">Name A–Z</option>
+            <option value="favorites">Highest Rated</option>
+        </select>
+
+        <label>Favorites</label>
+        <select id="fontFavorite">
+            <option value="0">All Fonts</option>
+            <option value="1">1+ Hearts</option>
+            <option value="2">2+ Hearts</option>
+            <option value="3">3 Hearts Only</option>
+        </select>
+        <p class="hint" id="fontStatus">Loading fonts...</p>
+        <div id="fontList"></div>
+    </aside>
+
+    <main>
+        <div id="viewport"></div>
+        <div class="toolbar">
+            3D Preview
+            <div class="hint">Drag to rotate · Scroll to zoom</div>
+            <div class="status" id="status">Ready</div>
+        </div>
+    </main>
+
+    <aside>
+        <h3>Inspector</h3>
+
+        <label>Text</label>
+        <input id="text" />
+
+        <label>Font Weight</label>
+        <select id="weight"></select>
+
+        <label>Font Size <span id="sizeValue"></span></label>
+        <input type="range" id="size" min="12" max="150" />
+
+        <label>Pixel Resolution <span id="pixelValue"></span></label>
+        <input type="range" id="pixel" min="1" max="12" />
+
+        <label>Fill Color</label>
+        <input type="color" id="color" />
+
+        <label>Outline Color</label>
+        <input type="color" id="outline" />
+
+        <label>3D Position (X / Y / Z)</label>
+        <div class="fields">
+            <input id="x" type="number" step="0.05" />
+            <input id="y" type="number" step="0.05" />
+            <input id="z" type="number" step="0.05" />
+        </div>
+
+        <label>3D Scale</label>
+        <input id="scale" type="number" min="0.1" max="5" step="0.05" />
+
+        <hr />
+        <h3>3D Geometry</h3>
+
+        <label>Render Mode</label>
+        <select id="renderMode">
+            <option value="stacked">Stacked Planes (Lightweight)</option>
+            <option value="extruded">Voxel Extruded Geometry</option>
+        </select>
+
+        <label>Thickness <span id="depthValue"></span></label>
+        <input id="depth" type="range" min="0" max="1" step="0.01" />
+
+        <label>Extrusion Direction X / Y / Z</label>
+        <div class="fields">
+            <input id="dirX" type="number" step="0.05" />
+            <input id="dirY" type="number" step="0.05" />
+            <input id="dirZ" type="number" step="0.05" />
+        </div>
+
+        <label>Side Color</label>
+        <input id="sideColor" type="color" />
+
+        <hr />
+        <h3>Material & Lighting</h3>
+
+        <label>Material Type</label>
+        <select id="materialType">
+            <option value="matte">Matte</option>
+            <option value="metallic">Metallic Look</option>
+            <option value="emissive">Emissive</option>
+            <option value="glow">Glow</option>
+        </select>
+
+        <label>Metalness <span id="metalnessValue"></span></label>
+        <input id="metalness" type="range" min="0" max="1" step="0.05" />
+
+        <label>Roughness <span id="roughnessValue"></span></label>
+        <input id="roughness" type="range" min="0" max="1" step="0.05" />
+
+        <label>Glow Strength <span id="glowValue"></span></label>
+        <input id="glowStrength" type="range" min="0" max="2" step="0.05" />
+
+        <label>Light Intensity <span id="lightValue"></span></label>
+        <input id="lightIntensity" type="range" min="0" max="8" step="0.1" />
+
+        <hr />
+        <button id="save" class="full">Save Design</button>
+        <button id="reset" class="full">Reset Design</button>
+        <p class="hint">
+            Export creates a TypeScript module.
+            Keep your original title3d.ts as backup before replacing it.
+        </p>
+    </aside>
+</div>
+
+<script type="module" src="/src/studio/main.ts"></script>
+</body>
+</html>
