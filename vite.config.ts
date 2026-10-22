@@ -1,7 +1,19 @@
+
 import { defineConfig } from 'vite';
+import { resolve } from 'node:path';
 
 export default defineConfig({
-  // GitHub Pages: ตั้ง base เป็น '/<repo-name>/' ตอน deploy (หรือใช้ env)
   base: process.env.BASE_PATH ?? '/',
-  build: { target: 'es2022', chunkSizeWarningLimit: 900 },
+
+  build: {
+    target: 'es2022',
+    chunkSizeWarningLimit: 900,
+
+    rollupOptions: {
+      input: {
+        portfolio: resolve(__dirname, 'index.html'),
+        titleStudio: resolve(__dirname, 'title.html')
+      }
+    }
+  }
 });
