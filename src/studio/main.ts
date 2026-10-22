@@ -616,17 +616,21 @@ for (const id of [
   );
 }
 
-$('fontPreviewText').addEventListener('input', () => {
-  previewText = $<HTMLInputElement>(
-    'fontPreviewText'
-  ).value;
 
-  document.querySelectorAll<HTMLElement>(
-    '.font-preview'
-  ).forEach(element => {
-    element.textContent = previewText;
-  });
+const fontPreviewInput =
+  $<HTMLInputElement>('fontPreviewText');
+
+previewText = fontPreviewInput.value;
+
+fontPreviewInput.addEventListener('input', () => {
+  previewText = fontPreviewInput.value;
+
+  document.querySelectorAll<HTMLElement>('.font-preview')
+    .forEach(element => {
+      element.textContent = previewText;
+    });
 });
+
 
 // ==================================================
 // PIXEL TEXTURE
@@ -1138,10 +1142,14 @@ function pickLayer(
   return candidates[0].id;
 }
 
+
+let selectionEnabled = true;
+
 function selectLayer(id: number) {
   if (!layers.some(layer => layer.id === id)) return;
 
   selectedId = id;
+  selectionEnabled = true;
 
   syncInspector();
   renderLayers();
@@ -1149,6 +1157,23 @@ function selectLayer(id: number) {
 
   keyLight.intensity = current().lightIntensity;
 }
+
+function clearSelection() {
+  selectionEnabled = false;
+
+  // Hide the frame and corner handles immediately.
+  frameVisible = false;
+  selectionLine.visible = false;
+
+  handleMeshes.forEach(handle => {
+    handle.visible = false;
+  });
+
+  // Keep selectedId so the Inspector retains
+  // its last values without an active selection.
+  renderLayers();
+}
+
 
 // ==================================================
 // SELECTION FRAME · MOVE · CORNER SCALE · RIGHT-CLICK MENU
@@ -1235,42 +1260,86 @@ const corners = [
 ];
 let frameVisible = false;
 
+
+
 function updateSelectionFrame() {
-  const layer = layers.find(l => l.id === selectedId);
-  const group = layer ? objects.get(layer.id) : undefined;
-  const canvas = layer ? hitCanvases.get(layer.id) : undefined;
+  const layer = selectionEnabled
+    ? layers.find(l => l.id === selectedId)
+    : undefined;
+
+  const group = layer
+    ? objects.get(layer.id)
+    : undefined;
+
+  const canvas = layer
+    ? hitCanvases.get(layer.id)
+    : undefined;
 
   frameVisible = !!(layer && group && canvas);
+
   selectionLine.visible = frameVisible;
-  handleMeshes.forEach(h => { h.visible = frameVisible; });
-  if (!layer || !group || !canvas) return;
 
-  const b = textBounds(canvas);
-  const pad = 0.05;
-  const s = group.scale.x;
-  const p = group.position;
+  handleMeshes.forEach(handle => {
+    handle.visible = frameVisible;
+  });
 
-  const left = p.x + (b.x0 / canvas.width - 0.5) * PLANE_W * s - pad;
-  const right = p.x + (b.x1 / canvas.width - 0.5) * PLANE_W * s + pad;
-  const top = p.y + (0.5 - b.y0 / canvas.height) * PLANE_H * s + pad;
-  const bottom = p.y + (0.5 - b.y1 / canvas.height) * PLANE_H * s - pad;
-  const z = p.z + 0.03;
+  if (!layer || !group || !canvas) {
+    return;
+  }
+
+  const bounds = textBounds(canvas);
+  const padding = 0.05;
+  const scale = group.scale.x;
+  const position = group.position;
+
+  const left =
+    position.x +
+    (bounds.x0 / canvas.width - 0.5) * PLANE_W * scale -
+    padding;
+
+  const right =
+    position.x +
+    (bounds.x1 / canvas.width - 0.5) * PLANE_W * scale +
+    padding;
+
+  const top =
+    position.y +
+    (0.5 - bounds.y0 / canvas.height) * PLANE_H * scale +
+    padding;
+
+  const bottom =
+    position.y +
+    (0.5 - bounds.y1 / canvas.height) * PLANE_H * scale -
+    padding;
+
+  const z = position.z + 0.03;
 
   corners[0].set(left, top, z);
   corners[1].set(right, top, z);
   corners[2].set(right, bottom, z);
   corners[3].set(left, bottom, z);
 
-  selectionLine.position.set((left + right) / 2, (top + bottom) / 2, z);
-  selectionLine.scale.set(right - left, top - bottom, 1);
+  selectionLine.position.set(
+    (left + right) / 2,
+    (top + bottom) / 2,
+    z
+  );
 
-  const size = distance * 0.016;
-  handleMeshes.forEach((h, i) => {
-    h.position.copy(corners[i]);
-    h.quaternion.copy(camera.quaternion);
-    h.scale.setScalar(size);
+  selectionLine.scale.set(
+    right - left,
+    top - bottom,
+    1
+  );
+
+  const handleSize = distance * 0.016;
+
+  handleMeshes.forEach((handle, index) => {
+    handle.position.copy(corners[index]);
+    handle.quaternion.copy(camera.quaternion);
+    handle.scale.setScalar(handleSize);
   });
 }
+
 frameHooks.push(updateSelectionFrame);
 
 // ---- pointer gestures ----
@@ -1348,10 +1417,24 @@ renderer.domElement.addEventListener('pointerdown', e => {
     }
   }
 
-  // 3) empty space -> rotate camera
-  gesture = { kind: 'orbit', x: e.clientX, y: e.clientY, moved: false };
-  renderer.domElement.setPointerCapture(e.pointerId);
+
+
+// 3) Empty space -> deselect and orbit
+clearSelection();
+
+gesture = {
+  kind: 'orbit',
+  x: e.clientX,
+  y: e.clientY,
+  moved: false
+};
+
+renderer.domElement.setPointerCapture(e.pointerId);
 });
+
+// The pointerdown handler ends above.
+// The existing pointermove handler continues below.
+
 
 renderer.domElement.addEventListener('pointermove', e => {
   const g = gesture;
@@ -1542,34 +1625,44 @@ renderer.domElement.addEventListener(
   { passive: false }
 );
 
-renderer.domElement.addEventListener(
-  'dblclick',
-  event => {
-    const id = pickLayer(event);
 
-    if (id !== null) {
-      selectLayer(id);
+renderer.domElement.addEventListener('dblclick', event => {
+  event.preventDefault();
 
-      openTextEditor(
-        'edit',
-        event.clientX,
-        event.clientY
-      );
-    } else {
-      openTextEditor(
-        'add',
-        event.clientX,
-        event.clientY
-      );
-    }
+  const hitId = pickLayer(event);
+
+  if (hitId !== null) {
+    // Double-click existing text: edit that layer.
+    selectLayer(hitId);
+
+    openTextEditor(
+      'edit',
+      event.clientX,
+      event.clientY
+    );
+
+    return;
   }
-);
+
+  // Double-click empty space: add a new text layer.
+  clearSelection();
+
+  openTextEditor(
+    'add',
+    event.clientX,
+    event.clientY
+  );
+});
+
 
 // ==================================================
 // INLINE TEXT EDITOR
 // ==================================================
 
+
 let editorMode: 'add' | 'edit' = 'edit';
+let editingLayerId: number | null = null;
+
 
 function openTextEditor(
   mode: 'add' | 'edit',
@@ -1581,35 +1674,43 @@ function openTextEditor(
   const panel = $('textEditor');
   const input = $<HTMLInputElement>('editingText');
 
-  panel.classList.remove('hidden');
+  if (mode === 'edit') {
+    editingLayerId = selectedId;
 
-  input.value = mode === 'edit'
-    ? current().text
-    : '';
+    const layer = layers.find(
+      l => l.id === editingLayerId
+    );
+
+    if (!layer) return;
+
+    input.value = layer.text;
+  } else {
+    editingLayerId = null;
+    input.value = '';
+  }
+
+  panel.classList.remove('hidden');
 
   if (
     clientX !== undefined &&
     clientY !== undefined
   ) {
+    const halfWidth = Math.min(210, window.innerWidth / 2);
+    const halfHeight = Math.min(90, window.innerHeight / 2);
+
     panel.style.left = `${
       THREE.MathUtils.clamp(
         clientX,
-        Math.min(220, window.innerWidth / 2),
-        Math.max(
-          window.innerWidth - 220,
-          window.innerWidth / 2
-        )
+        halfWidth,
+        Math.max(halfWidth, window.innerWidth - halfWidth)
       )
     }px`;
 
     panel.style.top = `${
       THREE.MathUtils.clamp(
         clientY,
-        Math.min(110, window.innerHeight / 2),
-        Math.max(
-          window.innerHeight - 110,
-          window.innerHeight / 2
-        )
+        halfHeight,
+        Math.max(halfHeight, window.innerHeight - halfHeight)
       )
     }px`;
   } else {
@@ -1619,10 +1720,6 @@ function openTextEditor(
 
   input.focus();
   input.select();
-}
-
-function closeTextEditor() {
-  $('textEditor').classList.add('hidden');
 }
 
 function applyTextEditor() {
@@ -1636,11 +1733,24 @@ function applyTextEditor() {
   }
 
   if (editorMode === 'edit') {
-    current().text = text;
+    // Edit the original layer, not a new layer.
+    const layer = layers.find(
+      l => l.id === editingLayerId
+    );
+
+    if (!layer) {
+      setStatus('Original text layer not found');
+      closeTextEditor();
+      return;
+    }
+
+    layer.text = text;
+    selectedId = layer.id;
   } else {
+    // Create a new layer only in add mode.
     const id = Math.max(
       0,
-      ...layers.map(layer => layer.id)
+      ...layers.map(l => l.id)
     ) + 1;
 
     const newLayer = normalize({
@@ -1656,6 +1766,9 @@ function applyTextEditor() {
     selectedId = id;
   }
 
+  editingLayerId = null;
+  selectionEnabled = true;
+
   closeTextEditor();
 
   renderLayers();
@@ -1663,6 +1776,11 @@ function applyTextEditor() {
   renderFontList();
 
   void renderAll();
+}
+
+
+function closeTextEditor() {
+  $('textEditor').classList.add('hidden');
 }
 
 $('confirmText').onclick = applyTextEditor;
