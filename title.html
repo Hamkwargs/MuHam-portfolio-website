@@ -1,245 +1,198 @@
-
 <!doctype html>
 <html lang="en">
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Folio Type Studio</title>
+    <link rel="stylesheet" href="/src/studio/studio.css" />
     <style>
-        * { box-sizing: border-box; }
-        body {
-          margin: 0;
-          background: #161c1b;
-          color: #e9dfca;
-          font: 13px system-ui, sans-serif;
+        #viewport canvas { touch-action: none; }
+        .ctx-menu {
+          position: fixed; z-index: 2000; min-width: 190px; padding: 6px;
+          background: #222e29; border: 1px solid #c5a16d; border-radius: 8px;
+          box-shadow: 0 14px 50px #000a;
         }
-        header {
-          height: 60px;
-          padding: 0 22px;
-          border-bottom: 1px solid #35413b;
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
+        .ctx-menu.hidden { display: none; }
+        .ctx-menu button {
+          display: block; width: 100%; text-align: left;
+          background: transparent; border: 0; padding: 9px 12px; border-radius: 5px;
         }
-        header h2 { font-family: Georgia, serif; letter-spacing: 2px; }
-        .layout {
-          display: grid;
-          grid-template-columns: 270px minmax(0, 1fr) 300px;
-          height: calc(100vh - 60px);
-        }
-        aside {
-          padding: 18px;
-          overflow-y: auto;
-          background: #202927;
-          border-right: 1px solid #35413b;
-        }
-        aside:last-child {
-          border-left: 1px solid #35413b;
-          border-right: 0;
-        }
-        main {
-          position: relative;
-          min-width: 0;
-          background: #101615;
-        }
-        #viewport { width: 100%; height: 100%; }
-        h3 {
-          font-size: 11px;
-          text-transform: uppercase;
-          letter-spacing: 2px;
-          color: #d6b685;
-          margin: 8px 0 14px;
-        }
-        label { display: block; color: #b1c0b5; margin: 12px 0 5px; }
-        input, select, button {
-          font: inherit;
-          color: #f4e9d1;
-          background: #303c36;
-          border: 1px solid #58675c;
-          padding: 9px;
-          border-radius: 5px;
-        }
-        input:not([type=color]):not([type=range]),
-        select { width: 100%; }
-        input[type=range] { width: 100%; padding: 0; }
-        input[type=color] { width: 100%; height: 38px; padding: 3px; }
-        button { cursor: pointer; }
-        button:hover { background: #526350; }
-        button:disabled { opacity: .4; cursor: not-allowed; }
-        button.primary { background: #826340; border-color: #bb9b6b; }
-        .full { width: 100%; margin-top: 10px; }
-        .layer, .font-item {
-          width: 100%;
-          text-align: left;
-          margin-bottom: 6px;
-        }
-        .layer.active { border-color: #dfbf85; background: #514936; }
-        #fontList { max-height: 270px; overflow: auto; }
-        .font-item { display: block; overflow: hidden; }
-        .font-item small { opacity: .6; display: block; }
-        .fields { display: grid; grid-template-columns: repeat(3, 1fr); gap: 7px; }
-        .fields input { min-width: 0; }
-        .hint { color: #91a096; font-size: 11px; line-height: 1.7; }
-        .toolbar {
-          position: absolute;
-          top: 14px;
-          left: 14px;
-          background: #202927df;
-          padding: 10px 14px;
-          border: 1px solid #415047;
-          border-radius: 6px;
-        }
-        .status { color: #c9b68c; }
-        hr { border: 0; border-top: 1px solid #3b4940; margin: 22px 0; }
-        @media(max-width: 850px) {
-          .layout { grid-template-columns: 1fr; height: auto; }
-          aside { max-height: 450px; }
-          main { height: 460px; order: -1; }
-        }
+        .ctx-menu button:hover:not(:disabled) { background: #485b4c; }
+        .ctx-menu button.danger-item { color: #ffb4a3; }
+        .ctx-menu hr { border: 0; border-top: 1px solid #3b473e; margin: 5px 0; }
     </style>
 </head>
 <body>
-<header>
-    <h2>FOLIO · TYPE STUDIO</h2>
-    <button class="primary" id="export">EXPORT TITLE3D.TS</button>
-</header>
+<div class="topbar">
+    <div>
+        <strong>FOLIO · TYPE STUDIO</strong>
+        <span class="subtitle">Design the 3D title for your room</span>
+    </div>
+    <div class="top-actions">
+        <button id="add">+ Add text</button>
+        <button id="save">Save</button>
+        <button id="reset">Reset</button>
+        <button class="primary" id="export">EXPORT TITLE3D.TS</button>
+    </div>
+</div>
 
-<div class="layout">
-    <aside>
-        <h3>Layers</h3>
-        <div id="layers"></div>
-        <button id="add" class="full">+ Add Text Layer</button>
-        <button id="remove" class="full">Remove Selected</button>
+<div class="workspace" id="workspace">
+    <!-- LEFT -->
+    <aside class="sidebar sidebar-left">
+        <section>
+            <h3>Font Library</h3>
+            <input id="search" placeholder="Search fonts..." />
 
-        <hr />
-        <h3>Font Library</h3>
+            <label>Preview text</label>
+            <input id="fontPreviewText" value="Folio de Dossier" />
 
-        <input
-                id="search"
-                placeholder="Search Fontsource fonts..."
-        />
+            <div class="filter-grid">
+                <div>
+                    <label>Category</label>
+                    <select id="fontCategory">
+                        <option value="all">All</option>
+                        <option value="serif">Serif</option>
+                        <option value="sans-serif">Sans Serif</option>
+                        <option value="display">Display</option>
+                        <option value="handwriting">Handwriting</option>
+                        <option value="monospace">Monospace</option>
+                    </select>
+                </div>
+                <div>
+                    <label>Sort</label>
+                    <select id="fontSort">
+                        <option value="name">Name A–Z</option>
+                        <option value="favorites">Top rated</option>
+                    </select>
+                </div>
+            </div>
 
-        <label>Category</label>
-        <select id="fontCategory">
-            <option value="all">All Fonts</option>
-            <option value="serif">Serif</option>
-            <option value="sans-serif">Sans Serif</option>
-            <option value="display">Display</option>
-            <option value="handwriting">Handwriting</option>
-            <option value="monospace">Monospace</option>
-        </select>
+            <label>Favorites</label>
+            <select id="fontFavorite">
+                <option value="0">All fonts</option>
+                <option value="1">1+ hearts</option>
+                <option value="2">2+ hearts</option>
+                <option value="3">3 hearts only</option>
+            </select>
 
-        <label>Sort By</label>
-        <select id="fontSort">
-            <option value="name">Name A–Z</option>
-            <option value="favorites">Highest Rated</option>
-        </select>
-
-        <label>Favorites</label>
-        <select id="fontFavorite">
-            <option value="0">All Fonts</option>
-            <option value="1">1+ Hearts</option>
-            <option value="2">2+ Hearts</option>
-            <option value="3">3 Hearts Only</option>
-        </select>
-        <p class="hint" id="fontStatus">Loading fonts...</p>
-        <div id="fontList"></div>
+            <p class="hint" id="fontStatus">Loading fonts...</p>
+            <div id="fontList"></div>
+        </section>
     </aside>
 
-    <main>
+    <div class="resize-handle" id="resizeLeft"></div>
+
+    <!-- CENTER -->
+    <main class="preview-panel">
         <div id="viewport"></div>
-        <div class="toolbar">
-            3D Preview
-            <div class="hint">Drag to rotate · Scroll to zoom</div>
-            <div class="status" id="status">Ready</div>
+        <div class="preview-info">
+            <strong>3D PREVIEW</strong>
+            <p>Click = select · Drag text = move · Drag corner = scale</p>
+            <p>Arrow keys = nudge (Shift = bigger) · Right-click = menu</p>
+            <p>Drag empty space = rotate · Scroll = zoom · Double-click = edit / add</p>
         </div>
+        <div class="status" id="status">Loading…</div>
     </main>
 
-    <aside>
-        <h3>Inspector</h3>
+    <div class="resize-handle" id="resizeRight"></div>
 
-        <label>Text</label>
-        <input id="text" />
+    <!-- RIGHT -->
+    <aside class="sidebar sidebar-right">
+        <h3>Selected</h3>
+        <div class="selected-name" id="selectedName">—</div>
 
-        <label>Font Weight</label>
-        <select id="weight"></select>
+        <section>
+            <h3>Typography</h3>
+            <label>Font weight</label>
+            <select id="weight"></select>
 
-        <label>Font Size <span id="sizeValue"></span></label>
-        <input type="range" id="size" min="12" max="150" />
+            <label>Font size <span id="sizeValue"></span></label>
+            <input id="size" type="range" min="12" max="200" step="1" />
 
-        <label>Pixel Resolution <span id="pixelValue"></span></label>
-        <input type="range" id="pixel" min="1" max="12" />
+            <label>Pixel size <span id="pixelValue"></span></label>
+            <input id="pixel" type="range" min="1" max="12" step="1" />
 
-        <label>Fill Color</label>
-        <input type="color" id="color" />
+            <label>Fill color</label>
+            <input id="color" type="color" />
 
-        <label>Outline Color</label>
-        <input type="color" id="outline" />
+            <label>Outline color</label>
+            <input id="outline" type="color" />
+        </section>
 
-        <label>3D Position (X / Y / Z)</label>
-        <div class="fields">
-            <input id="x" type="number" step="0.05" />
-            <input id="y" type="number" step="0.05" />
-            <input id="z" type="number" step="0.05" />
-        </div>
+        <section>
+            <h3>Position</h3>
+            <label>X / Y / Z</label>
+            <div class="number-grid">
+                <input id="x" type="number" step="0.05" />
+                <input id="y" type="number" step="0.05" />
+                <input id="z" type="number" step="0.05" />
+            </div>
+        </section>
 
-        <label>3D Scale</label>
-        <input id="scale" type="number" min="0.1" max="5" step="0.05" />
+        <section>
+            <h3>3D Geometry</h3>
+            <label>Render mode</label>
+            <select id="renderMode">
+                <option value="stacked">Stacked planes (light)</option>
+                <option value="extruded">Voxel extruded</option>
+            </select>
 
-        <hr />
-        <h3>3D Geometry</h3>
+            <label>Thickness <span id="depthValue"></span></label>
+            <input id="depth" type="range" min="0" max="1" step="0.01" />
 
-        <label>Render Mode</label>
-        <select id="renderMode">
-            <option value="stacked">Stacked Planes (Lightweight)</option>
-            <option value="extruded">Voxel Extruded Geometry</option>
-        </select>
+            <label>Extrusion direction X / Y / Z</label>
+            <div class="number-grid">
+                <input id="dirX" type="number" step="0.05" />
+                <input id="dirY" type="number" step="0.05" />
+                <input id="dirZ" type="number" step="0.05" />
+            </div>
 
-        <label>Thickness <span id="depthValue"></span></label>
-        <input id="depth" type="range" min="0" max="1" step="0.01" />
+            <label>Side color</label>
+            <input id="sideColor" type="color" />
+        </section>
 
-        <label>Extrusion Direction X / Y / Z</label>
-        <div class="fields">
-            <input id="dirX" type="number" step="0.05" />
-            <input id="dirY" type="number" step="0.05" />
-            <input id="dirZ" type="number" step="0.05" />
-        </div>
+        <section>
+            <h3>Material &amp; Light</h3>
+            <label>Material</label>
+            <select id="materialType">
+                <option value="matte">Matte</option>
+                <option value="metallic">Metallic</option>
+                <option value="emissive">Emissive</option>
+                <option value="glow">Glow</option>
+            </select>
 
-        <label>Side Color</label>
-        <input id="sideColor" type="color" />
+            <label>Metalness <span id="metalnessValue"></span></label>
+            <input id="metalness" type="range" min="0" max="1" step="0.05" />
 
-        <hr />
-        <h3>Material & Lighting</h3>
+            <label>Roughness <span id="roughnessValue"></span></label>
+            <input id="roughness" type="range" min="0" max="1" step="0.05" />
 
-        <label>Material Type</label>
-        <select id="materialType">
-            <option value="matte">Matte</option>
-            <option value="metallic">Metallic Look</option>
-            <option value="emissive">Emissive</option>
-            <option value="glow">Glow</option>
-        </select>
+            <label>Glow strength <span id="glowValue"></span></label>
+            <input id="glowStrength" type="range" min="0" max="2" step="0.05" />
 
-        <label>Metalness <span id="metalnessValue"></span></label>
-        <input id="metalness" type="range" min="0" max="1" step="0.05" />
+            <label>Light intensity <span id="lightValue"></span></label>
+            <input id="lightIntensity" type="range" min="0" max="8" step="0.1" />
+        </section>
 
-        <label>Roughness <span id="roughnessValue"></span></label>
-        <input id="roughness" type="range" min="0" max="1" step="0.05" />
-
-        <label>Glow Strength <span id="glowValue"></span></label>
-        <input id="glowStrength" type="range" min="0" max="2" step="0.05" />
-
-        <label>Light Intensity <span id="lightValue"></span></label>
-        <input id="lightIntensity" type="range" min="0" max="8" step="0.1" />
-
-        <hr />
-        <button id="save" class="full">Save Design</button>
-        <button id="reset" class="full">Reset Design</button>
         <p class="hint">
-            Export creates a TypeScript module.
-            Keep your original title3d.ts as backup before replacing it.
+            Export downloads a new title3d.ts. Keep a backup of your current
+            src/title3d.ts before replacing it.
         </p>
     </aside>
 </div>
+
+<!-- Inline text editor (double-click on text) -->
+<div class="text-editor hidden" id="textEditor">
+    <label style="margin-top:0">Text</label>
+    <input id="editingText" />
+    <div class="edit-actions">
+        <button id="cancelText">Cancel</button>
+        <button class="primary" id="confirmText">Apply</button>
+    </div>
+</div>
+
+<!-- Right-click menu -->
+<div class="ctx-menu hidden" id="ctxMenu"></div>
 
 <script type="module" src="/src/studio/main.ts"></script>
 </body>
