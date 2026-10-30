@@ -89,6 +89,7 @@ import { useDoor } from './door';
 import './side-table';
 import './modules/desk';
 import './ui';
+import { updateTruthVision, renderTruthColorObjects, setTruthHover, isQuietTarget } from './truth-effects';
 
 import { openModule, closeModule } from './stage';
 import { goTo, tour } from './tour';
@@ -337,6 +338,7 @@ function animate() {
     }
 
     S.hoveredItem = newHovered;
+    setTruthHover(newHovered);
 
     if (S.hoveredItem) {
       setHighlight(
@@ -354,7 +356,7 @@ function animate() {
       tooltipDesc.innerText =
         S.hoveredItem.userData.info.desc;
 
-      tooltipEl.classList.add('show');
+      tooltipEl.classList.toggle('show', !isQuietTarget(S.hoveredItem));
     } else {
       document.body.style.cursor = 'default';
       tooltipEl.classList.remove('show');
@@ -628,7 +630,9 @@ function animate() {
   // RENDER THREE.JS
   // ========================================
 
+  updateTruthVision();
   composer.render();
+  renderTruthColorObjects();
 
   rayRenderer.render(
     rayScene,

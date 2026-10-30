@@ -4,6 +4,7 @@ import { S } from './state';
 import { camera } from './core';
 import { interactiveObjects, onRegister } from './interactables';
 import { redStringMat, sfZ } from './furniture';
+import { setTruthVision, isQuietTarget } from './truth-effects';
 
 // =========================================================================
 // RAYCASTING & INTERACTION LOGIC
@@ -24,6 +25,7 @@ const badgeContainer = document.getElementById('badge-container');
 
 export const badges: Array<{ el: HTMLDivElement; obj: any }> = [];
 const makeBadge = (obj: any) => {
+  if (isQuietTarget(obj)) return;
   const el = document.createElement('div');
   el.className = 'vision-badge';
   el.innerText = `[?] ${obj.userData.info.title}`;
@@ -35,6 +37,7 @@ onRegister(makeBadge);   // วัตถุที่ลงทะเบียน�
 
 function toggleDetectiveVision() {
   S.detectiveVision = !S.detectiveVision;
+  setTruthVision(S.detectiveVision);
   visionBtn.classList.toggle('active', S.detectiveVision);
   visionText.innerText = S.detectiveVision ? 'Detective vision: ON' : 'Detective vision: OFF';
   badges.forEach(b => {

@@ -1231,3 +1231,259 @@ body.touring #hint,body.in-module #hint{opacity:0!important}
     transition: none !important;
   }
 }
+
+/* ===========================================================
+   TRUTH VISION / NEWSPRINT / DANGANRONPA-STYLE CMYK
+   =========================================================== */
+#truth-fx{position:fixed;inset:0;z-index:18;pointer-events:none;--eye-x:calc(100vw - 45px);--eye-y:42px}
+.truth-newsprint{position:absolute;inset:0;opacity:0;transition:opacity .25s;backdrop-filter:grayscale(1) contrast(1.32) brightness(1.12);-webkit-backdrop-filter:grayscale(1) contrast(1.32) brightness(1.12);background:radial-gradient(#15131a 0.75px,transparent 1.3px) 0 0/6px 6px,linear-gradient(#f0e8d1 0 0);background-blend-mode:multiply;mix-blend-mode:normal;clip-path:circle(0 at var(--eye-x) var(--eye-y));transition:clip-path 1s cubic-bezier(.16,.8,.2,1),opacity .2s}
+#truth-fx.enabled .truth-newsprint{opacity:.88;clip-path:circle(160vmax at var(--eye-x) var(--eye-y))}
+.truth-wave{position:absolute;left:var(--eye-x);top:var(--eye-y);width:50px;height:50px;border:5px double #f3bf4b;border-radius:50%;box-shadow:0 0 0 3px #e3477c,0 0 0 7px #2dbec9,0 0 28px #f3bf4b;opacity:0;transform:translate(-50%,-50%) scale(.1)}
+.truth-wave.cast{animation:truth-wave-cast 1.1s ease-out both}
+@keyframes truth-wave-cast{0%{opacity:1;transform:translate(-50%,-50%) scale(.1)}60%{opacity:.8}100%{opacity:0;transform:translate(-50%,-50%) scale(48)}}
+.truth-targets{position:absolute;inset:0;display:none}
+.truth-target{position:absolute;transform:translate(-50%,-50%);isolation:isolate;filter:drop-shadow(5px 7px 0 #1b1027);animation:truth-breathe 2s ease-in-out infinite alternate}
+.truth-target i{position:absolute;inset:0;clip-path:polygon(50% 0,100% 90%,0 90%);transform-origin:50% 54%;opacity:.87}
+.truth-target i:nth-child(1){background:#f4b73c;animation:truth-spin 8s linear infinite}
+.truth-target i:nth-child(2){inset:8%;background:#d83c76;animation:truth-spin 6.5s linear infinite reverse}
+.truth-target i:nth-child(3){inset:16%;background:#27c1c8;animation:truth-spin 5.2s linear infinite}
+.truth-target i:nth-child(4){inset:24%;background:#2b1939;animation:truth-spin 7.4s linear infinite reverse}
+.truth-target i:nth-child(5){inset:31%;background:#f5e4bd;animation:truth-spin 4s linear infinite}
+.truth-target b{position:absolute;inset:38%;background:#1e1526;border-radius:50%;box-shadow:0 0 0 2px #f4b73c}
+.truth-target.hovered{z-index:1;filter:drop-shadow(10px 12px 0 #d83c76) drop-shadow(-5px -4px 0 #27c1c8);animation:truth-breathe .4s ease-in-out infinite alternate}
+.truth-target.hovered i:nth-child(odd){animation-duration:1.5s}
+.truth-target.hovered i:nth-child(even){animation-duration:1.1s}
+@keyframes truth-spin{to{transform:rotate(360deg)}}
+@keyframes truth-breathe{to{scale:1.06}}
+.truth-tv{position:fixed;inset:0;z-index:70;opacity:0;pointer-events:none;overflow:hidden}
+.truth-tv.playing{opacity:1}
+.truth-static{position:absolute;inset:0;background:repeating-linear-gradient(0deg,#1d1526 0 4px,#efe2c3 4px 8px,#2ab7c2 8px 10px,#d83c76 10px 12px);transform:translateX(-110%)}
+.truth-tv.playing .truth-static{animation:truth-static-wipe 1.4s steps(9) both}
+.truth-iris{position:absolute;inset:0;background:#1d1526;clip-path:circle(0 at 50% 50%)}
+.truth-tv.playing .truth-iris{animation:truth-iris-wipe 1.4s ease-in-out both}
+.truth-card{position:absolute;left:50%;top:50%;width:min(80vw,480px);padding:30px 22px;background:#efe2c3;border:5px solid #1d1526;box-shadow:9px 9px 0 #d83c76,-7px -7px 0 #2ab7c2;text-align:center;color:#1d1526;opacity:0;transform:translate(-50%,-50%) scale(.1) rotate(-24deg)}
+.truth-card small,.truth-card span{display:block;font:900 11px Silkscreen,monospace;letter-spacing:2px}
+.truth-card strong{display:block;margin:15px 0;font:900 italic clamp(27px,5vw,56px) Georgia,serif;text-transform:uppercase;text-shadow:-2px 2px #d83c76,2px -2px #2ab7c2}
+.truth-tv.playing .truth-card{animation:truth-card-wipe 1.4s ease-in-out both}
+@keyframes truth-static-wipe{0%{transform:translateX(-110%)}25%,65%{transform:translateX(0)}100%{transform:translateX(110%)}}
+@keyframes truth-iris-wipe{0%{clip-path:circle(0)}24%,65%{clip-path:circle(100%)}100%{clip-path:circle(0)}}
+@keyframes truth-card-wipe{0%,16%{opacity:0;transform:translate(-50%,-50%) scale(.1) rotate(-24deg)}33%,64%{opacity:1;transform:translate(-50%,-50%) scale(1) rotate(-3deg)}100%{opacity:0;transform:translate(-50%,-50%) scale(1.8) rotate(12deg)}}
+/* Original pixel hamburger restored; overlapping restaurant-menu paper stack */
+#menu-btn,#menu-btn.open{width:42px!important;height:38px!important;top:18px!important;left:22px!important;opacity:1!important;pointer-events:auto!important;background:#1d1526!important;border:0!important;box-shadow:inset 0 0 0 2px #f4b73c,4px 4px 0 #120d14!important;clip-path:none!important;transform:none!important}
+#menu-btn span{background:#f4b73c!important;width:20px!important;height:3px!important}
+#menu-panel{inset:72px auto auto 26px!important;top:72px!important;left:26px!important;width:min(88vw,410px)!important;height:auto!important;max-height:calc(100dvh - 95px)!important;overflow-y:auto!important;overflow-x:visible!important;background:#e9dfc4!important;border:3px solid #342436!important;clip-path:none!important;box-shadow:8px 9px 0 #d1bd95,15px 17px 0 #a98b78,20px 23px 0 #1d1526!important;transform:translateY(-15px) rotate(-3deg)!important;transform-origin:top left}
+#menu-panel.open{transform:translateY(0) rotate(-1.5deg)!important}
+#menu-panel .detective-menu-header{height:116px;background:#3a293a}
+#menu-panel .detective-menu-heading{font:900 italic clamp(24px,5vw,37px) Georgia,serif!important;letter-spacing:-1px;line-height:1.05}
+#menu-panel .detective-menu-kicker{font-size:9px}
+#menu-panel .detective-menu-close{z-index:3}
+#menu-list .menu-item:hover,#menu-list .menu-item:focus-visible{transform:rotate(-1deg) translateX(4px)!important;background:#e3c36f!important}
+#menu-list .menu-item:hover .t,#menu-list .menu-item:hover .n{color:#211727!important}
+@media(max-width:480px){#menu-panel{left:13px!important;width:calc(100vw - 45px)!important}}
+@media(prefers-reduced-motion:reduce){.truth-target,.truth-target i,.truth-wave,.truth-tv *{animation:none!important}.truth-newsprint{transition:none!important}}
+
+/* Preserve the room image under the newspaper ink overlay. */
+.truth-newsprint{background:radial-gradient(#17141b 0.8px,transparent 1.3px) 0 0/6px 6px,rgba(233,224,203,.14)!important}
+
+/* ===== Truth Vision v2: a single shared wavefront controls the ink reveal ===== */
+#truth-fx { --truth-radius: 0px; }
+#truth-fx .truth-newsprint,
+#truth-fx.enabled .truth-newsprint {
+  opacity: 1 !important;
+  transition: none !important;
+  clip-path: circle(var(--truth-radius) at var(--eye-x) var(--eye-y)) !important;
+}
+#truth-fx .truth-wave,
+#truth-fx .truth-wave.cast {
+  left: var(--eye-x);
+  top: var(--eye-y);
+  width: 0;
+  height: 0;
+  transform: translate(-50%,-50%);
+  animation: none !important;
+  border: 3px solid #f4b73c;
+  box-shadow: 0 0 0 3px #d83c76,0 0 0 6px #27c1c8,0 0 20px #f4b73c;
+  opacity: 0;
+  transition: none;
+}
+/* Soft, layered ink-print shadows instead of rotating triangles. */
+#truth-fx .truth-target {
+  border-radius: 45% 55% 52% 48%;
+  animation: none !important;
+  filter: none;
+  opacity: .88;
+  transition: transform .2s ease,opacity .2s ease;
+}
+#truth-fx .truth-target i { clip-path: none !important; animation: none !important; border-radius: 45% 55% 52% 48%; }
+#truth-fx .truth-target i:nth-child(1) { inset: 12%; background: #d83c76; transform: translate(9px,6px) rotate(-9deg); opacity:.75; }
+#truth-fx .truth-target i:nth-child(2) { inset: 15%; background: #27c1c8; transform: translate(-8px,-5px) rotate(8deg); opacity:.75; }
+#truth-fx .truth-target i:nth-child(3) { inset: 20%; background: #f4b73c; transform: translate(0,4px) rotate(3deg); opacity:.7; }
+#truth-fx .truth-target.hovered { transform: translate(-50%,-50%) scale(1.07); filter:none; }
+#truth-fx .truth-target.hovered i:nth-child(1) { transform: translate(13px,7px) rotate(-11deg); }
+#truth-fx .truth-target.hovered i:nth-child(2) { transform: translate(-11px,-7px) rotate(10deg); }
+#truth-fx .truth-target.hovered i:nth-child(3) { transform: translate(0,5px) rotate(4deg); }
+#truth-fx .truth-target i { transition:transform .2s ease; }
+
+
+/* ===== Truth Vision v3: cinematic ink shockwave + real mesh colors ===== */
+#truth-fx .truth-wave{border:7px solid #f5e8ca!important;box-shadow:0 0 0 3px #19131d,0 0 0 11px rgba(250,240,213,.92),0 0 0 15px #19131d,0 0 0 24px rgba(255,255,255,.34),0 0 75px 25px rgba(255,239,207,.75)!important;filter:drop-shadow(0 0 22px #fff4d4);mix-blend-mode:screen}
+#truth-fx .truth-wave::before,#truth-fx .truth-wave::after{content:"";position:absolute;inset:-34px;border:2px dashed rgba(255,246,220,.75);border-radius:50%;animation:inkShockSpin 3s linear infinite}
+#truth-fx .truth-wave::after{inset:-65px;border:3px dotted rgba(25,18,28,.9);animation-direction:reverse}
+@keyframes inkShockSpin{to{transform:rotate(360deg)}}
+#truth-fx .truth-targets{display:none!important}
+#truth-fx .truth-newsprint{backdrop-filter:grayscale(1) contrast(1.5) brightness(1.04)!important;-webkit-backdrop-filter:grayscale(1) contrast(1.5) brightness(1.04)!important}
+#truth-fx .truth-splatter{position:absolute;inset:0;pointer-events:none;opacity:.68;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='760' height='540' viewBox='0 0 760 540'%3E%3Cg fill='%230d0b10'%3E%3Cpath d='M100 95c20-28 43-8 52 13 16-4 36 4 30 24 31 13 19 37-4 39-4 26-33 34-48 12-26 17-50-6-40-28-28-12-24-39 10-60z'/%3E%3Ccircle cx='62' cy='68' r='8'/%3E%3Ccircle cx='184' cy='83' r='5'/%3E%3Ccircle cx='217' cy='144' r='11'/%3E%3Ccircle cx='78' cy='213' r='5'/%3E%3Cpath d='M131 169l-8 102 16-38 9 56 4-111zM93 121l-49 15 34 4-25 21 49-22z'/%3E%3Cpath d='M580 348c26-21 45-1 45 16 26-9 39 10 25 29 17 26-7 40-28 30-17 27-41 11-44-9-27 6-40-16-27-34-13-15 3-37 29-32z'/%3E%3Ccircle cx='669' cy='339' r='9'/%3E%3Ccircle cx='530' cy='427' r='6'/%3E%3Cpath d='M596 412l-13 96 19-42 5 53 11-102z'/%3E%3C/g%3E%3C/svg%3E");background-size:min(70vw,760px) auto;background-position:center;background-repeat:repeat;clip-path:circle(0 at var(--eye-x) var(--eye-y))}
+@media(prefers-reduced-motion:reduce){#truth-fx .truth-wave::before,#truth-fx .truth-wave::after{animation:none}}
+
+/* v4: monochrome is revealed by the SAME radius as the expanding shockwave.
+   Override the older newsprint opacity/background and remove splatter. */
+#truth-fx .truth-newsprint,#truth-fx.enabled .truth-newsprint {
+  opacity:1!important; background:rgba(232,225,212,.05)!important;
+  backdrop-filter:grayscale(1) contrast(1.48) brightness(1.05)!important;
+  -webkit-backdrop-filter:grayscale(1) contrast(1.48) brightness(1.05)!important;
+  clip-path:circle(var(--truth-radius) at var(--eye-x) var(--eye-y))!important;
+  transition:none!important;
+}
+#truth-fx .truth-splatter{display:none!important}
+#truth-fx .truth-wave{
+  border:16px solid rgba(248,239,219,.98)!important;
+  box-shadow:0 0 0 7px #1c1621,0 0 0 20px rgba(245,233,208,.9),0 0 0 29px rgba(25,19,30,.85),0 0 0 48px rgba(245,233,208,.28),0 0 90px 34px rgba(255,248,224,.65)!important;
+  mix-blend-mode:normal!important;
+}
+#truth-fx .truth-wave::before{inset:-58px!important;border:8px dashed #eee0c1!important}
+#truth-fx .truth-wave::after{inset:-88px!important;border:5px dotted #221b28!important}
+
+/* ===== V5: subtle monochrome FILM, with vivid 3D objects rendered above it ===== */
+#truth-fx .truth-newsprint,#truth-fx.enabled .truth-newsprint {
+  /* Warm silver-gelatin film, not harsh photocopy black/white. */
+  backdrop-filter: grayscale(.9) sepia(.13) contrast(1.10) brightness(1.015) !important;
+  -webkit-backdrop-filter: grayscale(.9) sepia(.13) contrast(1.10) brightness(1.015) !important;
+  background: repeating-radial-gradient(circle at 12% 32%,rgba(25,22,25,.075) 0 0.5px,transparent 0.8px 4px) !important;
+}
+#truth-color-canvas { position:fixed; inset:0; width:100%;height:100%;z-index:19;pointer-events:none;display:none; }
+
+/* Cinematic Noir: preserve lighting, no paper tint or halftone */
+#truth-fx .truth-newsprint,#truth-fx.enabled .truth-newsprint{
+ background:none!important; background-image:none!important;
+ opacity:1!important;mix-blend-mode:normal!important;
+ backdrop-filter:grayscale(.88) saturate(.24) contrast(1.055) brightness(.99)!important;
+ -webkit-backdrop-filter:grayscale(.88) saturate(.24) contrast(1.055) brightness(.99)!important;
+ clip-path:circle(var(--truth-radius,0px) at var(--eye-x,50%) var(--eye-y,50%))!important;
+ transition:none!important;
+}
+#truth-fx .truth-newsprint::after{
+ content:"";position:absolute;inset:0;pointer-events:none;opacity:.1;
+ background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.7' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+ mix-blend-mode:soft-light;
+}
+#truth-fx .truth-targets{display:none!important}
+#truth-color-canvas{z-index:19!important}
+
+/* Performance profile: reduce GPU-expensive multi-layer glows and spinning outlines. */
+#truth-fx .truth-wave {
+  filter:none!important;
+  box-shadow:0 0 0 7px #1c1621,0 0 0 19px rgba(245,233,208,.85),0 0 0 27px rgba(25,19,30,.8),0 0 30px 8px rgba(255,248,224,.3)!important;
+}
+#truth-fx .truth-wave::before,#truth-fx .truth-wave::after {animation:none!important;}
+#truth-fx .truth-newsprint::after {opacity:.045!important;}
+
+/* =============================================================
+   CASE MENU FIX — header visibility, single close, no overlap
+   Keep this block last: earlier styles use !important overrides.
+   ============================================================= */
+#menu-panel {
+  box-sizing: border-box !important;
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
+  padding-bottom: 24px !important;
+}
+#menu-panel .detective-menu-header {
+  height: auto !important;
+  min-height: 178px !important;
+  overflow: visible !important;
+  clip-path: none !important;
+  display: flex !important;
+  align-items: center !important;
+  box-sizing: border-box !important;
+  padding: 10px 54px 14px 0 !important;
+}
+#menu-panel .detective-menu-header-copy {
+  box-sizing: border-box !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  padding: 14px 12px 12px 26px !important;
+}
+#menu-panel .detective-menu-kicker {
+  font-size: 9px !important;
+  letter-spacing: 1.3px !important;
+  line-height: 1.5 !important;
+}
+#menu-panel .detective-menu-heading {
+  font: 900 italic clamp(25px, 5vw, 34px)/1.03 Georgia, serif !important;
+  letter-spacing: -1px !important;
+  overflow-wrap: anywhere !important;
+  white-space: normal !important;
+  margin-top: 10px !important;
+}
+#menu-panel .detective-menu-close {
+  position: absolute !important;
+  top: 14px !important;
+  right: 14px !important;
+  z-index: 8 !important;
+}
+/* Only the paper menu's own X is visible while the menu is open. */
+body:has(#menu-panel.open) #menu-btn,
+#menu-btn.open {
+  opacity: 0 !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+}
+/* Inventory is still available when the menu is closed. */
+body:has(#menu-panel.open) #inventory {
+  opacity: 0 !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+}
+@media (max-width: 480px) {
+  #menu-panel .detective-menu-header { min-height: 160px !important; }
+  #menu-panel .detective-menu-heading { font-size: 27px !important; }
+  #menu-panel .detective-menu-header-copy { padding-left: 18px !important; }
+}
+
+/* CASE MENU POLISH — keep halftone inside header; hide protruding scrollbar */
+#menu-panel .detective-menu-header {
+  overflow: hidden !important;
+  isolation: isolate;
+}
+#menu-panel .detective-menu-header::before {
+  inset: 0 !important;
+  clip-path: inset(0) !important;
+}
+#menu-panel {
+  scrollbar-width: none !important;
+  -ms-overflow-style: none !important;
+}
+#menu-panel::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+}
+
+/* ===== Detail-view / Case Menu mutual exclusion ===== */
+/* The menu and its backdrop must not cover an open object detail. */
+body:has(#back-btn:not([hidden])) #menu-panel,
+body:has(#back-btn:not([hidden])) #detective-menu-scrim {
+  opacity: 0 !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+}
+body:has(#back-btn:not([hidden])) #menu-btn {
+  opacity: 0 !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+}
+/* No duplicate back-to-room button over the menu header. */
+body:has(#menu-panel.open) #back-btn {
+  visibility: hidden !important;
+  pointer-events: none !important;
+}

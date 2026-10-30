@@ -10,7 +10,14 @@ import { TOUR_ORDER, type StopId } from './shots';
 import { goTo, openStop, hudClickLogical } from './tour';
 import { useDoor } from './door';
 
+/** Open the selected object directly; camera movement remains handled by openStop(). */
 export function activateItem(obj: any) {
+  // Close the case menu before starting the camera pan / opening details.
+  setMenu(false);
+  activateItemNow(obj);
+}
+
+function activateItemNow(obj: any) {
   const type = obj.userData.info.type;
 
   if (type === 'window') {
@@ -81,12 +88,12 @@ kicker.textContent = 'CLASSIFIED // CASE FILE 001';
 
 const heading = document.createElement('div');
 heading.className = 'detective-menu-heading';
-heading.textContent = 'EXPLORE!';
+heading.textContent = "THE DETECTIVE'S DINER";
 
 headerCopy.append(kicker, heading);
 header.appendChild(headerCopy);
 
-menuTitle.textContent = 'SELECT A CASE FILE';
+menuTitle.textContent = 'THE CASE MENU · EST. 2026';
 menuPanel.insertBefore(header, menuTitle);
 
 // Close button
@@ -122,6 +129,17 @@ function setMenu(open: boolean) {
 
   if ('inert' in menuPanel) {
     menuPanel.inert = !open;
+  }
+
+  if (open && !document.getElementById('back-btn')?.hasAttribute('hidden')) {
+    // A detail view is active: never layer the case menu over it.
+    open = false;
+    menuBtn.classList.remove('open');
+    menuPanel.classList.remove('open');
+    scrim.classList.remove('open');
+    menuBtn.setAttribute('aria-expanded', 'false');
+    menuPanel.setAttribute('aria-hidden', 'true');
+    menuPanel.inert = true;
   }
 
   if (open) {
@@ -182,8 +200,8 @@ const seenType = new Set<string>();
     btn.append(number, ico, txt, arrow);
 
     btn.addEventListener('click', () => {
-      activateItem(obj);
       setMenu(false);
+      activateItem(obj);
     });
 
     li.appendChild(btn);
