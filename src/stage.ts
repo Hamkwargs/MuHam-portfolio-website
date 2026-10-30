@@ -64,7 +64,7 @@ export const stage = {
 
 export const registerModule = (m: StageModule) => stage.modules.set(m.id, m);
 
-export function openModule(id: StopId, after?: () => void) {
+export function openModule(id: StopId, after?: () => void, focusOverride?: Parameters<typeof flyTo>[0]) {
   if (S.introActive) return;
   const m = stage.modules.get(id); if (!m || stage.active === m) return;
   if (stage.active) { const old = stage.active; stage.active = null; old.close(); }
@@ -72,7 +72,7 @@ export function openModule(id: StopId, after?: () => void) {
   document.body.classList.add('module-open');
   document.getElementById('tooltip')?.classList.remove('show');
   m.enter?.(); focusLighting(true);
-  flyTo(SHOTS[id].focus, { dur: m.flightDur ?? 1.5, onComplete: () => { if (stage.active === m) { stage.opened = true; m.open(); after?.(); } } });
+  flyTo(focusOverride ?? SHOTS[id].focus, { dur: m.flightDur ?? 1.5, onComplete: () => { if (stage.active === m) { stage.opened = true; m.open(); after?.(); } } });
 }
 export function closeModule() {
   const m = stage.active; if (!m) return;

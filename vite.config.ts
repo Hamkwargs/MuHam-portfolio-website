@@ -12,7 +12,8 @@ export default defineConfig({
     rollupOptions: {
       input: {
         portfolio: resolve(__dirname, 'index.html'),
-        titleStudio: resolve(__dirname, 'title.html')
+        titleStudio: resolve(__dirname, 'title.html'),
+        caseRoom: resolve(__dirname, 'case-room.html')
       }
     }
   }

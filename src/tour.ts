@@ -1,7 +1,7 @@
 /**
  * Scroll tour: เลื่อนเมาส์/ปัดนิ้ว/กดปุ่ม → กล้องพาไปทีละ "station" และ **เปิดของให้เอง** ไม่ต้องคลิก
- *   board (ภาพรวม → Profile → Education → Experience) → trophy (ทีละใบ ช้า ๆ) → pc (เลือกโปรเจกต์เอง)
- *   → CV (มีคำใบ้ให้คลิก) → โต๊ะโทรศัพท์ (โทรศัพท์สั่น → เลื่อนต่อ = เปิดหน้า "Call me, maybe?")
+ *   board (Profile → Education → Experience) → trophy (หนึ่งจุดใน tour) → pc (เลือกโปรเจกต์เอง)
+ *   → CV (มีคำใบ้ให้คลิก) → Call me, maybe? (เปิดหน้า Contact ทันที)
  * ไม่มีระบบจำว่าดูแล้ว: เลื่อนดูซ้ำได้ตลอด
  */
 import { S } from './state';
@@ -9,24 +9,21 @@ import { flyOverview } from './rig';
 import { type StopId, TOUR_ORDER } from './shots';
 import { stops } from './content';
 import { stage, openModule, closeModule } from './stage';
-import { awards, docSheets } from './data';
 import { boardTour } from './modules/board';
+import { boardGroups } from './board-items';
 import { trophyTour } from './modules/trophy';
 import { deskTour } from './modules/desk';
 import { PAL } from './px/palette';
 import { panel, sprite, rect, inside, SPRITES, type Rect } from './px/pixel';
 
-interface Step { stop: StopId; label: string; run?: () => void; slow?: boolean }
-const nTrophy = Math.max(1, awards.length + docSheets.length);
+interface Step { stop: StopId; label: string; run?: () => void }
 export const STEPS: Step[] = [
-  { stop: 'board', label: 'The case board', run: () => boardTour.show('overview') },
   { stop: 'board', label: 'Who am I', run: () => boardTour.show('profile') },
   { stop: 'board', label: 'Education', run: () => boardTour.show('edu') },
   { stop: 'board', label: 'Experience', run: () => boardTour.show('exp') },
-  ...Array.from({ length: nTrophy }, (_, i): Step => ({ stop: 'trophy', label: `Awards & certificates ${i + 1}/${nTrophy}`, run: () => trophyTour.select(i), slow: true })),
+  { stop: 'trophy', label: 'Awards & certificates', run: () => trophyTour.select(0) },
   { stop: 'pc', label: 'Projects \u00b7 pick a case file' },
   { stop: 'resume', label: 'R\u00e9sum\u00e9 \u00b7 click to open' },
-  { stop: 'desk', label: 'The phone is ringing\u2026', run: () => deskTour.phone(true) },
   { stop: 'desk', label: 'Call me, maybe?', run: () => deskTour.contact() },
 ];
 const firstOf = (id: StopId) => STEPS.findIndex(s => s.stop === id);
@@ -41,7 +38,16 @@ export function go(i: number) {
   i = Math.min(i, STEPS.length - 1); const st = STEPS[i];
   tour.index = i; tour.last = i; setTouring(true); stage.tourDriven = true;
   if (stage.active && stage.active.id === st.stop) st.run?.();
-  else openModule(st.stop, () => st.run?.());
+  else if (st.stop === 'board' && i >= 0 && i <= 2) {
+    // Fly straight to the selected sheet instead of stopping at board overview first.
+    const groupId = (['profile', 'edu', 'exp'] as const)[i];
+    const group = boardGroups.find(g => g.id === groupId);
+    if (group) {
+      openModule('board', () => boardTour.show(groupId, true), {
+        pos: group.shot.pos, look: group.shot.look, parallax: 0.02,
+      });
+    } else openModule(st.stop, () => st.run?.());
+  } else openModule(st.stop, () => st.run?.());
   updateBar();
 }
 export const goTo = go;
@@ -68,7 +74,7 @@ function step(dir: number) {
 
 // ---------- input: wheel / swipe / keys ----------
 const blocked = () => S.tutorialActive || S.introActive || !!document.getElementById('menu-panel')?.classList.contains('open') || !!document.getElementById('cv-viewer')?.classList.contains('on');
-const cooldown = () => { const nx = STEPS[Math.min(STEPS.length - 1, Math.max(0, tour.index + 1))]; return (stage.active?.id === 'trophy' || nx?.slow) && tour.index >= 0 ? 1800 : 1300; };
+const cooldown = () => 1300;
 
 /** ใต้เมาส์เป็นกล่องที่เลื่อนอ่านได้ (เช่น เนื้อหาใน sheet) → ปล่อยให้มันเลื่อนเอง ไม่ข้าม station */
 function scrollableAt(t: EventTarget | null, down: boolean): boolean {

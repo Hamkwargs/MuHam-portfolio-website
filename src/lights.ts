@@ -1,14 +1,10 @@
-/** แสงหลักของห้อง (ambient, hemisphere, window spot, neon) */
+/** Main room lighting. Original positions and intensities retained. */
 import * as THREE from 'three';
 import { LI } from './legacy-compat';
 import { scene } from './core';
 
-// =========================================================================
-// สภาพแวดล้อม: แสง, ท้องฟ้า, ฝน และลำแสง
-// =========================================================================
 export const ambientLight = new THREE.AmbientLight(0x402b1f, 0.85 * LI);
 scene.add(ambientLight);
-
 export const hemiLight = new THREE.HemisphereLight(0xffdfa8, 0x1f1109, 0.4 * LI);
 scene.add(hemiLight);
 

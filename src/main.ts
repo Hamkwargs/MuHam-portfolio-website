@@ -66,7 +66,6 @@ import {
 } from './ui-camera';
 import { rig, flyTo } from './rig';
 import { frame as stageFrame, stage } from './stage';
-
 import './tour';
 import './board-items';
 import './modules/board';
@@ -74,7 +73,11 @@ import './modules/trophy';
 import './modules/pc';
 import './seasonal';
 
-import { updateTitle } from './title3d';
+// ========================================
+// TITLE 3D + SUNLIGHT INTEGRATION
+// ========================================
+
+import { updateTitle, renderTitleOverlay } from './title3d';
 
 import './frames';
 import './modules/resume';
@@ -90,7 +93,6 @@ import './ui';
 import { openModule, closeModule } from './stage';
 import { goTo, tour } from './tour';
 import { scatterDust, toScreenXY } from './view';
-
 import './textures';
 import './room';
 import './weather';
@@ -124,10 +126,9 @@ function revealTutorialAfterFrame() {
   // เพื่อให้ browser มีโอกาสนำภาพฉากขึ้นแสดง
   requestAnimationFrame(() =>
     requestAnimationFrame(() => {
-      S.bootDone = true;   // เริ่ม intro (กล้องซูมเข้าห้อง) ทันทีที่ loading จางหาย
+      S.bootDone = true;
 
       const boot = document.getElementById('boot');
-
       if (!boot) return;
 
       const done = (event: TransitionEvent) => {
@@ -182,7 +183,7 @@ function animate() {
 
   updateIntro(dt);
 
-  // สมุดโน้ตเด้งขึ้นทันทีหลังกล้องซูมเข้าห้องเสร็จ (intro จบ)
+  // สมุดโน้ตเด้งขึ้นทันทีหลังกล้องซูมเข้าห้องเสร็จ
   if (!notebookQueued && S.bootDone && !S.introActive) {
     notebookQueued = true;
     setTimeout(showNotebook, 350);
@@ -616,11 +617,10 @@ function animate() {
 
   stageFrame(dt, t);
 
+  // The title is independent of the room's lighting and weather.
   updateTitle(
     t,
-    !S.introActive &&
-      !stage.active &&
-      rig.mix < 0.15,
+    !S.introActive && !stage.active && rig.mix < 0.15,
     dt
   );
 
@@ -639,6 +639,9 @@ function animate() {
     dustScene,
     camera
   );
+
+  // Draw the title last, above bloom, rays, and dust.
+  renderTitleOverlay(dustRenderer, camera);
 
   // ========================================
   // FIRST FRAME -> TUTORIAL
@@ -675,11 +678,13 @@ if (
             1.2,
             0.6
           ),
+
           look: new THREE.Vector3(
             2.7,
             0.6,
             -2.2
           ),
+
           parallax: 0,
         },
         {

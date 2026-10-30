@@ -1,178 +1,362 @@
-import '@fontsource/great-vibes/latin-400.css';
-import '@fontsource/pixelify-sans/latin-700.css';
+import '@fontsource/whisper';
+import '@fontsource/ballet';
+import '@fontsource/silkscreen';
 import * as THREE from 'three';
-import { scene, dustScene } from './core';
 
 /**
- * ชื่อเว็บลอยกลางห้อง: "Mon Folio : Dossier Personnel"
- * - "Folio" = ตัวอักษรหวัดแบบ pixel-art (เหมือนเดิม)
- * - "Mon" และ "Dossier Personnel" = pixel font (Pixelify Sans) พิกเซลหนา อ่านง่าย วาดบน dust layer ความละเอียดเต็ม
- * - อยู่ลึกเข้าไปในห้องกว่าเดิม (BASE_Z) ไม่ลอยหน้าของอื่น
+ * 3D portfolio title, rendered above the room's bloom and light rays.
+ * Front: original warm gold. 3D extrusion: dark brown, thinner than before.
  */
+const CW = 512;
+const CH = 160;
+const PLANE_W = 4.05;
+const PLANE_H = (PLANE_W * CH) / CW;
+const BASE_X = 0;
+const BASE_Y = 2.26;
+const BASE_Z = -0.5;
 
-const W = 420;
-const H = 140;
-const HW = W / 2, HH = H / 2;                   // ข้อความ pixel-font: canvas เล็ก ขยายแบบ nearest (ได้พิกเซลหนา ๆ อ่านง่าย)
+// Change this to adjust the color of the 3D extrusion.
+const SIDE_COLOR = '#4A2E1C';
+const DEPTH_DIR = new THREE.Vector3(0.15, -0.1, -1).normalize();
+const DEPTH_STEPS = 8;
 
-// ---------- Folio (pixel) ----------
-const canvas = document.createElement('canvas');
-canvas.width = W;
-canvas.height = H;
-const ctx = canvas.getContext('2d', { willReadFrequently: true })!;
-const texture = new THREE.CanvasTexture(canvas);
-texture.magFilter = THREE.NearestFilter;
-texture.minFilter = THREE.NearestFilter;
-texture.generateMipmaps = false;
-texture.colorSpace = THREE.SRGBColorSpace;
+// Multiplier for 3D thickness. 1 = original; 0.5 = half as thick.
+const DEPTH_MULTIPLIER = 0.35;
 
-// ---------- Mon + Dossier Personnel (คม) ----------
-const hiCanvas = document.createElement('canvas');
-hiCanvas.width = HW;
-hiCanvas.height = HH;
-const hiCtx = hiCanvas.getContext('2d')!;
-const hiTexture = new THREE.CanvasTexture(hiCanvas);
-hiTexture.magFilter = THREE.NearestFilter;
-hiTexture.minFilter = THREE.NearestFilter;
-hiTexture.generateMipmaps = false;
-hiTexture.colorSpace = THREE.SRGBColorSpace;
-
-function paintFolio() {
-  ctx.clearRect(0, 0, W, H);
-  ctx.textBaseline = 'alphabetic';
-  ctx.textAlign = 'left';
-  ctx.fillStyle = '#ffffff';
-  ctx.font = '96px "Great Vibes", cursive';
-  ctx.fillText('Folio', 108, 86);
-
-  const img = ctx.getImageData(0, 0, W, H);
-  const d = img.data;
-  const mask = new Uint8Array(W * H);
-  for (let i = 0; i < W * H; i++) mask[i] = d[i * 4 + 3] >= 55 ? 1 : 0;
-  d.fill(0);
-
-  const setPixel = (px: number, py: number, r: number, g: number, b: number) => {
-    if (px < 0 || py < 0 || px >= W || py >= H) return;
-    const k = (py * W + px) * 4;
-    d[k] = r; d[k + 1] = g; d[k + 2] = b; d[k + 3] = 255;
-  };
-
-  // outline
-  const outline = [[-1, 0], [1, 0], [0, -1], [0, 1], [-1, -1], [1, -1], [-1, 1], [1, 1], [-2, 0], [2, 0], [0, -2], [0, 2]] as const;
-  for (let py = 0; py < H; py++) for (let px = 0; px < W; px++) {
-    if (!mask[py * W + px]) continue;
-    for (const [dx, dy] of outline) {
-      const nx = px + dx, ny = py + dy;
-      if (nx < 0 || ny < 0 || nx >= W || ny >= H) continue;
-      if (!mask[ny * W + nx]) setPixel(nx, ny, 34, 20, 10);
-    }
-  }
-  // inner shadow
-  for (let py = 0; py < H; py++) for (let px = 0; px < W; px++) {
-    if (!mask[py * W + px]) continue;
-    const nx = px + 1, ny = py + 1;
-    if (nx < W && ny < H && !mask[ny * W + nx]) setPixel(nx, ny, 92, 58, 20);
-  }
-  // fill
-  for (let py = 0; py < H; py++) for (let px = 0; px < W; px++) {
-    if (mask[py * W + px]) setPixel(px, py, 255, 236, 176);
-  }
-  ctx.putImageData(img, 0, 0);
-  texture.needsUpdate = true;
-}
-
-/** วาดข้อความด้วย pixel font → binarize (ตัด antialias) + ขอบเข้ม 1 texel */
-function pixText(str: string, size: number, fill: string, edge: string) {
-  const pad = 3, m = document.createElement('canvas').getContext('2d')!;
-  const font = `700 ${size}px "Pixelify Sans", monospace`; m.font = font;
-  const w = Math.ceil(m.measureText(str).width) + pad * 2, h = Math.ceil(size * 1.5) + pad * 2;
-  const cv = document.createElement('canvas'); cv.width = w; cv.height = h;
-  const cx = cv.getContext('2d', { willReadFrequently: true })!;
-  cx.font = font; cx.textBaseline = 'alphabetic'; cx.fillStyle = '#fff'; cx.fillText(str, pad, pad + size);
-  const id = cx.getImageData(0, 0, w, h), d = id.data, mask = new Uint8Array(w * h);
-  for (let i = 0; i < w * h; i++) mask[i] = d[i * 4 + 3] >= 110 ? 1 : 0;
-  d.fill(0);
-  const put = (x: number, y: number, hex: string) => { if (x < 0 || y < 0 || x >= w || y >= h) return; const k = (y * w + x) * 4; d[k] = parseInt(hex.slice(1, 3), 16); d[k + 1] = parseInt(hex.slice(3, 5), 16); d[k + 2] = parseInt(hex.slice(5, 7), 16); d[k + 3] = 255; };
-  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) if (mask[y * w + x]) for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) { const nx = x + dx, ny = y + dy; if (nx >= 0 && ny >= 0 && nx < w && ny < h && !mask[ny * w + nx]) put(nx, ny, edge); }
-  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) if (mask[y * w + x]) put(x, y, fill);
-  cx.putImageData(id, 0, 0);
-  return { cv, pad, size };
-}
-
-function paintSmall() {
-  hiCtx.clearRect(0, 0, hiCanvas.width, hiCanvas.height);
-  hiCtx.imageSmoothingEnabled = false;
-  const mon = pixText('Mon', 15, '#fff0cf', '#22140a');
-  hiCtx.drawImage(mon.cv, 38 - mon.pad, 22 - mon.pad - mon.size);
-  const sub = pixText('Dossier Personnel', 16, '#f6c866', '#22140a');
-  hiCtx.drawImage(sub.cv, Math.round(HW / 2 + 4 - sub.cv.width / 2), 64 - sub.pad - sub.size);
-  hiTexture.needsUpdate = true;
-}
-
-function paintTitle() {
-  paintFolio();
-  paintSmall();
-}
-
-paintTitle();
-Promise.all([
-  document.fonts.load('96px "Great Vibes"', 'Folio'),
-  document.fonts.load('700 16px "Pixelify Sans"', 'Mon Dossier Personnel'),
-]).then(paintTitle).catch(() => { /* keep fallback render */ });
-
-// ----------------------------
-// 3D TITLE SETUP
-// ----------------------------
-const aspect = H / W;
-const planeW = 4.05;
-const planeH = planeW * aspect;
-
-export const title3d = new THREE.Group();
-const hiGroup = new THREE.Group();   // Mon + Dossier Personnel: วาดบน dust canvas ความละเอียดเต็ม (ไม่แตก pixel)
-dustScene.add(hiGroup);
-const fadeMats: { m: THREE.MeshBasicMaterial; k: number }[] = [];
-const mk = (map: THREE.Texture, color: string | null, k: number) => {
-  const m = new THREE.MeshBasicMaterial({ map, transparent: true, opacity: 0, depthWrite: false, fog: false, toneMapped: false });
-  if (color) m.color = new THREE.Color(color);
-  fadeMats.push({ m, k });
-  return m;
+type RGB = [number, number, number];
+type LayerSpec = {
+  text: string;
+  family: string;
+  fallback: string;
+  size: number;
+  pixel: number;
+  fill: RGB;
+  edge: RGB;
+  stroke: number;
+  threshold: number;
+  nudgeX: number;
+  nudgeY: number;
+  x: number;
+  y: number;
+  z: number;
+  scale: number;
+  depth: number;
+  order: number;
+  smooth?: boolean;
+  outline?: number;
+  weightBoost?: number; // Extra gold thickness in low-resolution canvas pixels
 };
 
-// ความหนา (เฉพาะ Folio แบบ pixel)
-for (let i = 0; i < 3; i++) {
-  const depth = new THREE.Mesh(new THREE.PlaneGeometry(planeW, planeH), mk(texture, i < 2 ? '#4a2b12' : '#6b3b18', 0.95));
-  depth.position.set(0.012 * (i + 1), -0.01 * (i + 1), -0.01 * (i + 1));
-  depth.renderOrder = 3 + i;
-  title3d.add(depth);
+// Outline controls: 0 = off, 1 = tiny brown outline, 2 = thicker.
+// Stroke color: [166, 107, 63] = #A66B3F (visible warm brown).
+// SIDE_COLOR controls the darker 3D extrusion separately.
+// Keep the original font families, placement, and pixel settings.
+const LAYERS: LayerSpec[] = [
+  {
+    text: 'Hamkwargs',
+    family: 'Silkscreen',
+    fallback: 'monospace',
+    size: 48,
+    pixel: 1,
+    fill: [255, 240, 207],
+    edge: [128, 80, 47],
+    stroke: 2,
+    threshold: 35,
+    nudgeX: 0,
+    nudgeY: 0,
+    x: 0.82,
+    y: 1.85,
+    z: -0.51,
+    scale: 0.5,
+    depth: 0.3,
+    order: 10,
+    smooth: true,
+    outline: 2,
+  },
+  {
+    text: 'Port  olio',
+    family: 'Whisper',
+    fallback: 'cursive',
+    size: 178,
+    pixel: 2.5,
+    fill: [255, 234, 176],
+    edge: [128, 80, 47],
+    stroke: 0,
+    threshold: 40,
+    nudgeX: 0,
+    nudgeY: 0,
+    x: 0,
+    y: 2.26,
+    z: -0.5,
+    scale: 0.8,
+    depth: 0.18,
+    order: 30,
+    smooth: false,
+    outline: 1,
+  },
+  {
+    text: 'f',
+    family: 'Ballet',
+    fallback: 'cursive',
+    size: 86,
+    pixel: 2.5,
+    fill: [255, 234, 176],
+    edge: [128, 80, 47],
+    stroke: 0,
+    threshold: 30,
+    nudgeX: 0,
+    nudgeY: 0,
+    x: 0.26,
+    y: 2.26,
+    z: -0.5,
+    scale: 0.8,
+    depth: 0.18,
+    order: 50,
+    smooth: false,
+    outline: 1, // Brown outer stroke (unchanged)
+    weightBoost: 1.2, // Gold inner stroke: 0 = original, 1.6 = fuller f
+  },
+];
+
+function paintLayer(spec: LayerSpec, canvas: HTMLCanvasElement): void {
+  const p = spec.pixel;
+  const w = Math.ceil(CW / p);
+  const h = Math.ceil(CH / p);
+  canvas.width = w;
+  canvas.height = h;
+
+  const ctx = canvas.getContext('2d', { willReadFrequently: true });
+  if (!ctx) return;
+  ctx.clearRect(0, 0, w, h);
+  ctx.font = `${spec.size / p}px "${spec.family}", ${spec.fallback}`;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  const cx = (CW / 2 + spec.nudgeX) / p;
+  const cy = (CH / 2 + spec.nudgeY) / p;
+
+  if (spec.smooth) {
+    const [er, eg, eb] = spec.edge;
+    const [fr, fg, fb] = spec.fill;
+    // Smooth fonts (Hamkwargs): `stroke` controls the brown outline.
+    // `outline` remains the pixel-outline control for non-smooth fonts.
+    if (spec.stroke > 0) {
+      ctx.lineWidth = spec.stroke / p;
+      ctx.lineJoin = 'round';
+      ctx.lineCap = 'round';
+      ctx.strokeStyle = `rgb(${er},${eg},${eb})`;
+      ctx.strokeText(spec.text, cx, cy);
+    }
+    ctx.fillStyle = `rgb(${fr},${fg},${fb})`;
+    ctx.fillText(spec.text, cx, cy);
+    return;
+  }
+
+  // Build the glyph mask in white. For Ballet 'f', add a separate
+  // gold-colored weight layer BEFORE applying the unchanged brown outline.
+  // Canvas strokeText extends half its lineWidth outside the glyph.
+  if ((spec.weightBoost ?? 0) > 0) {
+    ctx.lineWidth = spec.weightBoost!;
+    ctx.lineJoin = 'round';
+    ctx.lineCap = 'round';
+    ctx.strokeStyle = '#ffffff';
+    ctx.strokeText(spec.text, cx, cy);
+  }
+  ctx.fillStyle = '#ffffff';
+  ctx.fillText(spec.text, cx, cy);
+  if (spec.stroke > 0) {
+    ctx.lineWidth = spec.stroke / p;
+    ctx.lineJoin = 'round';
+    ctx.lineCap = 'round';
+    ctx.strokeStyle = '#ffffff';
+    ctx.strokeText(spec.text, cx, cy);
+  }
+
+  const img = ctx.getImageData(0, 0, w, h);
+  const data = img.data;
+  const mask = new Uint8Array(w * h);
+  for (let i = 0; i < mask.length; i++) {
+    mask[i] = data[i * 4 + 3] >= spec.threshold ? 1 : 0;
+  }
+  data.fill(0);
+
+  const put = (x: number, y: number, color: RGB) => {
+    if (x < 0 || y < 0 || x >= w || y >= h) return;
+    const k = (y * w + x) * 4;
+    data[k] = color[0];
+    data[k + 1] = color[1];
+    data[k + 2] = color[2];
+    data[k + 3] = 255;
+  };
+
+  // Optional thin pixel outline. Each step = one pixel in the low-resolution
+  // text canvas (at pixel: 2.5, one step corresponds to 2.5 source pixels).
+  // Set outline: 0 to disable, 1 for thin, 2 for thicker.
+  const radius = Math.max(0, Math.floor(spec.outline ?? 0));
+  if (radius > 0) {
+    for (let y = 0; y < h; y++) {
+      for (let x = 0; x < w; x++) {
+        if (!mask[y * w + x]) continue;
+        for (let dy = -radius; dy <= radius; dy++) {
+          for (let dx = -radius; dx <= radius; dx++) {
+            if (dx * dx + dy * dy > radius * radius) continue;
+            const nx = x + dx;
+            const ny = y + dy;
+            if (nx < 0 || ny < 0 || nx >= w || ny >= h) continue;
+            if (!mask[ny * w + nx]) put(nx, ny, spec.edge);
+          }
+        }
+      }
+    }
+  }
+  // The enlarged gold glyph is painted last, on top of the brown outline.
+  for (let y = 0; y < h; y++) {
+    for (let x = 0; x < w; x++) {
+      if (mask[y * w + x]) put(x, y, spec.fill);
+    }
+  }
+  ctx.putImageData(img, 0, 0);
 }
-// เงาของข้อความคม 1 ชั้น
-const smallShadow = new THREE.Mesh(new THREE.PlaneGeometry(planeW, planeH), mk(hiTexture, '#2a1608', 0.8));
-smallShadow.position.set(0.012, -0.012, -0.012);
-smallShadow.renderOrder = 10;
-hiGroup.add(smallShadow);
 
-const frontMesh = new THREE.Mesh(new THREE.PlaneGeometry(planeW, planeH), mk(texture, null, 1));
-frontMesh.renderOrder = 20;
-title3d.add(frontMesh);
-const smallFront = new THREE.Mesh(new THREE.PlaneGeometry(planeW, planeH), mk(hiTexture, null, 1));
-smallFront.renderOrder = 21;
-hiGroup.add(smallFront);
+/**
+ * Make a white alpha mask for the extrusion.
+ * This prevents dark edge pixels from multiplying the brown material
+ * into an almost-black color.
+ */
+function paintSideMask(
+  source: HTMLCanvasElement,
+  target: HTMLCanvasElement
+): void {
+  target.width = source.width;
+  target.height = source.height;
+  const ctx = target.getContext('2d', { willReadFrequently: true });
+  if (!ctx) return;
+  ctx.clearRect(0, 0, target.width, target.height);
+  ctx.drawImage(source, 0, 0);
+  const img = ctx.getImageData(0, 0, target.width, target.height);
+  for (let i = 0; i < img.data.length; i += 4) {
+    img.data[i] = 255;
+    img.data[i + 1] = 255;
+    img.data[i + 2] = 255;
+  }
+  ctx.putImageData(img, 0, 0);
+}
 
-// ตำแหน่งในห้อง: ถอยเข้าไปลึกกว่าเดิม (เดิม z = 0.88)
-const BASE_X = 0;
-const BASE_Y = 2.18;
-const BASE_Z = -0.6;
+export const title3d = new THREE.Group();
+const fadeMats: Array<{ m: THREE.MeshBasicMaterial; k: number }> = [];
+const painters: Array<() => void> = [];
+
+function makeMaterial(
+  texture: THREE.Texture,
+  color: string | null,
+  fadeMultiplier: number
+): THREE.MeshBasicMaterial {
+  const material = new THREE.MeshBasicMaterial({
+    map: texture,
+    transparent: true,
+    opacity: 0,
+    depthWrite: false,
+    depthTest: false,
+    fog: false,
+    toneMapped: false,
+    side: THREE.DoubleSide,
+  });
+  if (color) material.color.set(color);
+  fadeMats.push({ m: material, k: fadeMultiplier });
+  return material;
+}
+
+for (const spec of LAYERS) {
+  const frontCanvas = document.createElement('canvas');
+  const sideCanvas = document.createElement('canvas');
+  const frontTexture = new THREE.CanvasTexture(frontCanvas);
+  const sideTexture = new THREE.CanvasTexture(sideCanvas);
+
+  for (const tex of [frontTexture, sideTexture]) {
+    tex.magFilter = spec.smooth ? THREE.LinearFilter : THREE.NearestFilter;
+    tex.minFilter = spec.smooth ? THREE.LinearFilter : THREE.NearestFilter;
+    tex.generateMipmaps = false;
+    tex.colorSpace = THREE.SRGBColorSpace;
+  }
+
+  painters.push(() => {
+    paintLayer(spec, frontCanvas);
+    paintSideMask(frontCanvas, sideCanvas);
+    frontTexture.needsUpdate = true;
+    sideTexture.needsUpdate = true;
+  });
+
+  const layer = new THREE.Group();
+  layer.position.set(spec.x - BASE_X, spec.y - BASE_Y, spec.z - BASE_Z);
+  layer.scale.setScalar(spec.scale);
+  title3d.add(layer);
+
+  const geometry = new THREE.PlaneGeometry(PLANE_W, PLANE_H);
+  const thickness = spec.depth * DEPTH_MULTIPLIER;
+
+  for (let i = DEPTH_STEPS; i >= 1; i--) {
+    const sideMaterial = makeMaterial(
+      sideTexture,
+      SIDE_COLOR,
+      0.95
+    );
+    const side = new THREE.Mesh(geometry, sideMaterial);
+    side.position.copy(DEPTH_DIR).multiplyScalar((thickness * i) / DEPTH_STEPS);
+    side.renderOrder = spec.order + (DEPTH_STEPS - i) * 0.01;
+    layer.add(side);
+  }
+
+  const faceMaterial = makeMaterial(frontTexture, null, 1);
+  const face = new THREE.Mesh(geometry, faceMaterial);
+  face.position.z = 0.008;
+  face.renderOrder = spec.order + 5;
+  layer.add(face);
+}
+
+const paintAll = () => painters.forEach((paint) => paint());
+paintAll();
+Promise.all(
+  LAYERS.map((spec) =>
+    document.fonts.load(
+      `${spec.size / spec.pixel}px "${spec.family}"`,
+      spec.text
+    )
+  )
+)
+  .then(paintAll)
+  .catch((error) => console.warn('Failed to load title fonts:', error));
 
 title3d.position.set(BASE_X, BASE_Y, BASE_Z);
-scene.add(title3d);
+export const titleOverlayScene = new THREE.Scene();
+titleOverlayScene.add(title3d);
+
+/** Render after composer, rayRenderer, and dustRenderer. */
+export function renderTitleOverlay(
+  renderer: THREE.WebGLRenderer,
+  camera: THREE.Camera
+): void {
+  if (!title3d.visible) return;
+  const previousAutoClear = renderer.autoClear;
+  renderer.autoClear = false;
+  try {
+    renderer.clearDepth();
+    renderer.render(titleOverlayScene, camera);
+  } finally {
+    renderer.autoClear = previousAutoClear;
+  }
+}
 
 let opacity = 0;
-
-/** เรียกทุกเฟรม */
-export function updateTitle(t: number, show: boolean, dt: number) {
-  opacity += ((show ? 0.97 : 0) - opacity) * (1 - Math.exp(-dt * 3.2));
+/** The fourth argument is accepted for compatibility but intentionally ignored. */
+export function updateTitle(
+  t: number,
+  show: boolean,
+  dt: number,
+  _light?: number
+): void {
+  const targetOpacity = show ? 0.97 : 0;
+  opacity += (targetOpacity - opacity) * (1 - Math.exp(-dt * 3.2));
   for (const { m, k } of fadeMats) m.opacity = opacity * k;
   title3d.visible = opacity > 0.01;
   title3d.position.y = BASE_Y + Math.sin(t * 0.9) * 0.035;
   title3d.rotation.y = Math.sin(t * 0.35) * 0.045;
-  hiGroup.position.copy(title3d.position); hiGroup.rotation.copy(title3d.rotation); hiGroup.visible = title3d.visible;
 }

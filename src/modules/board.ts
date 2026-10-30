@@ -47,22 +47,42 @@ function profileSheet() {
   p.style.width = '230px'; (p.querySelector('img') as HTMLElement).style.cssText = 'width:214px;height:230px'; const left = stackOf([p], 1);
   sheet.open({ kicker: `PLAYER 1 · LEVEL ${profile.level}`, title: profile.name, subtitle: `${profile.role} · ${profile.cls}`, html: `<p><em>${esc(profile.tagline ?? '')}</em></p>` + profile.body, left, stamp: 'ACCESS GRANTED', onClose: () => back() });
 }
-function openGroup(g: BoardGroup) {
-  current = g; hover = null; tl = null; flyTo({ pos: g.shot.pos, look: g.shot.look, parallax: 0.02 }, { dur: 0.9 });
-  clearTimeout(pend); pend = window.setTimeout(() => { if (g.id === 'profile') profileSheet(); else if (g.id === 'edu') timeline(education, 'EDUCATION', g); else timeline(experience, 'EXPERIENCE', g); }, 650);
+function openGroup(g: BoardGroup, alreadyFocused = false) {
+  current = g; hover = null; tl = null;
+  if (!alreadyFocused) {
+    flyTo({ pos: g.shot.pos, look: g.shot.look, parallax: 0.02 }, { dur: 0.9 });
+  }
+  clearTimeout(pend);
+  const reveal = () => {
+    if (current !== g || !ready) return;
+    if (g.id === 'profile') profileSheet();
+    else if (g.id === 'edu') timeline(education, 'EDUCATION', g);
+    else timeline(experience, 'EXPERIENCE', g);
+  };
+  if (alreadyFocused) reveal();
+  else pend = window.setTimeout(reveal, 650);
 }
 function back(): boolean {
-  if (!current) return false; clearTimeout(pend); const was = sheet.isOpen || true; sheet.close(); current = null; tl = null; flyTo(SHOTS.board.focus, { dur: 0.9 }); return was;
+  if (!current) return false;
+  clearTimeout(pend);
+  // Clear state before closing the sheet to avoid onClose calling back twice.
+  current = null;
+  tl = null;
+  sheet.close();
+  // Return to the board overview, not the room.
+  flyTo(SHOTS.board.focus, { dur: 0.9 });
+  return true;
 }
 
 /** ให้ tour สั่งเปลี่ยนมุมมองบอร์ด: overview / profile / edu / exp */
 export const boardTour = {
-  show(id: 'overview' | BoardGroup['id']) {
+  show(id: 'overview' | BoardGroup['id'], alreadyFocused = false) {
     if (!ready) return;
     clearTimeout(pend);
     if (id === 'overview') { if (current) back(); return; }
     const g = boardGroups.find(x => x.id === id); if (!g) return;
-    sheet.close(); openGroup(g);
+    // Switching tour sections must not trigger the previous sheet's back action.
+    current = null; tl = null; sheet.close(); openGroup(g, alreadyFocused);
   },
 };
 

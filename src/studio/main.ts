@@ -485,6 +485,9 @@ const fontObserver = new IntersectionObserver(
   }
 );
 
+const FONT_BATCH_SIZE = 60;
+let visibleFontCount = FONT_BATCH_SIZE;
+
 function renderFontList() {
   const search = $<HTMLInputElement>(
     'search'
@@ -520,7 +523,7 @@ function renderFontList() {
   const root = $('fontList');
   root.replaceChildren();
 
-  const results = matches.slice(0, 60);
+  const results = matches.slice(0, visibleFontCount);
 
   $('fontStatus').textContent =
     `${results.length} shown / ${matches.length} matching`;
