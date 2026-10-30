@@ -57,7 +57,7 @@ const LAYERS: LayerSpec[] = [
     family: 'Silkscreen',
     fallback: 'monospace',
     size: 48,
-    pixel: 1,
+    pixel: 1.5,
     fill: [255, 240, 207],
     edge: [128, 80, 47],
     stroke: 2,
