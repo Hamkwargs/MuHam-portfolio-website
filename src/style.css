@@ -1487,3 +1487,116 @@ body:has(#menu-panel.open) #back-btn {
   visibility: hidden !important;
   pointer-events: none !important;
 }
+
+
+
+/* =========================================================
+   TRUTH VISION — GPU SHADER CIRCULAR REVEAL
+   =========================================================
+
+   The grayscale reveal is now rendered by the
+   Three.js shader in postprocessing.ts.
+
+   Keep the existing circular wave and neon overlay.
+   Disable the old CSS backdrop-filter and clip-path
+   processing to avoid rendering the grayscale twice.
+   ========================================================= */
+
+/* Disable the old grayscale DOM overlay entirely.
+   ShaderPass now handles the circular reveal. */
+#truth-fx .truth-newsprint,
+#truth-fx.enabled .truth-newsprint {
+  display: none !important;
+  opacity: 0 !important;
+
+  background: none !important;
+  background-image: none !important;
+
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+
+  clip-path: none !important;
+  -webkit-clip-path: none !important;
+
+  filter: none !important;
+  mix-blend-mode: normal !important;
+
+  transition: none !important;
+  animation: none !important;
+}
+
+/* Keep the Truth Vision container above the scene.
+   It only displays visual effects, not the grayscale. */
+#truth-fx {
+  position: fixed;
+  inset: 0;
+  z-index: 18;
+  pointer-events: none;
+}
+
+/* Keep the expanding circle centered at the
+   original Truth Vision button position.
+
+   Width and height are still controlled by
+   truth-effects.ts. */
+#truth-fx .truth-wave {
+  position: absolute;
+
+  left: var(--eye-x);
+  top: var(--eye-y);
+
+  box-sizing: border-box;
+  border-radius: 50%;
+
+  transform: translate(-50%, -50%) !important;
+  transform-origin: center center;
+
+  transition: none !important;
+  animation: none !important;
+
+  pointer-events: none;
+  will-change: width, height, opacity;
+}
+
+/* Keep the original wave edge details.
+   Disable unnecessary spinning animations. */
+#truth-fx .truth-wave::before,
+#truth-fx .truth-wave::after {
+  animation: none !important;
+}
+
+/* Hide legacy target circles.
+   Real Three.js mesh highlights remain active. */
+#truth-fx .truth-targets {
+  display: none !important;
+}
+
+/* Keep the vivid object overlay above the scene
+   and the circular wave. */
+#truth-color-canvas {
+  position: fixed;
+  inset: 0;
+
+  width: 100%;
+  height: 100%;
+
+  z-index: 19 !important;
+
+  pointer-events: none;
+}
+
+/* Remove the old splatter overlay.
+   It is no longer needed for the shader reveal. */
+#truth-fx .truth-splatter {
+  display: none !important;
+}
+
+/* Respect reduced-motion preferences. */
+@media (prefers-reduced-motion: reduce) {
+  #truth-fx .truth-wave,
+  #truth-fx .truth-wave::before,
+  #truth-fx .truth-wave::after {
+    animation: none !important;
+    transition: none !important;
+  }
+}
